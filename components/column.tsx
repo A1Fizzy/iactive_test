@@ -1,4 +1,3 @@
-// components/Column.tsx
 'use client';
 
 import React, { useEffect, useRef } from 'react';
@@ -33,15 +32,6 @@ const Column: React.FC<ColumnProps> = ({ columnId, title }) => {
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (columnId === 'center' && sortOrder === 'newest') {
-      containerRef.current?.scrollTo({
-        top: containerRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-  }, [filteredMessages, columnId, sortOrder]);
 
   const handleMove = (messageId: number | string, targetColumn: ColumnType) => {
     dispatch(moveMessage({ messageId, targetColumn }));

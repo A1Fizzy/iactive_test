@@ -1,6 +1,5 @@
 import { ColumnType, Message } from "@/types";
 
-// utils/localStorageUtils.ts
 export const saveFavoritesToLocalStorage = (favorites: Record<string | number, boolean>): void => {
   try {
     localStorage.setItem('messageFavorites', JSON.stringify(favorites));

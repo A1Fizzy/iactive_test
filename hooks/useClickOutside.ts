@@ -1,4 +1,3 @@
-// hooks/useClickOutside.ts
 import { useEffect, RefObject } from 'react';
 
 // Тип для любого DOM элемента (включая null)
