@@ -5,6 +5,7 @@ import { AppDispatch } from "../store/store";
 import { Message, ColumnType, Attachment } from "../types";
 import { toggleFavorite, deleteMessage } from "../store/messagesSlice";
 import useClickOutside from "../hooks/useClickOutside";
+import Modal from './modal';
 
 interface MessageCardProps {
   message: Message;
@@ -21,6 +22,8 @@ const MessageCard: React.FC<MessageCardProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(menuRef, () => setIsMenuOpen(false));
@@ -31,16 +34,19 @@ const MessageCard: React.FC<MessageCardProps> = ({
 
   const handleCopyText = () => {
     navigator.clipboard.writeText(message.text).then(() => {
-      alert("Текст скопирован!");
+      setShowCopyModal(true);
       setIsMenuOpen(false);
     });
   };
 
   const handleDelete = () => {
-    if (confirm("Удалить сообщение?")) {
-      dispatch(deleteMessage(message.id));
-      setIsMenuOpen(false);
-    }
+    setShowDeleteModal(true);
+    setIsMenuOpen(false);
+  };
+
+  const confirmDelete = () => {
+    dispatch(deleteMessage(message.id));
+    setShowDeleteModal(false);
   };
 
   const handleMove = (targetColumn: ColumnType) => {
@@ -56,6 +62,8 @@ const MessageCard: React.FC<MessageCardProps> = ({
   const avatarLetter = message.author.charAt(0).toUpperCase();
 
   return (
+    <>
+    
     <div
       className={`border border-gray-200 rounded-lg p-3 bg-white
       transition-all duration-300 ease-in-out
@@ -218,7 +226,33 @@ const MessageCard: React.FC<MessageCardProps> = ({
           </div>
         </div>
       )}
+      
     </div>
+    <Modal
+        isOpen={showCopyModal}
+        onClose={() => setShowCopyModal(false)}
+        title="✅ Скопировано!"
+        showButtons={false}
+        autoClose={true}
+        autoCloseDelay={1000}
+      >
+        <div className="text-green-600 font-medium">
+          Текст скопирован в буфер обмена
+        </div>
+      </Modal>
+
+      {/* Модалка для подтверждения удаления */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Подтверждение удаления"
+        onConfirm={confirmDelete}
+        confirmText="Удалить"
+        cancelText="Отмена"
+      >
+        Вы уверены, что хотите удалить это сообщение? Это действие нельзя отменить.
+      </Modal>
+    </>
   );
 };
 
