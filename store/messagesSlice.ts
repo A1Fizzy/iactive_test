@@ -101,16 +101,19 @@ export const messagesSlice = createSlice({
   reducers: {
     moveMessage: (
       state,
-      action: PayloadAction<{ messageId: number | string; targetColumn: ColumnType }>
+      action: PayloadAction<{
+        messageId: number | string;
+        targetColumn: ColumnType;
+      }>
     ) => {
-      const msg = state.messages.find(m => m.id === action.payload.messageId);
+      const msg = state.messages.find((m) => m.id === action.payload.messageId);
       if (msg) {
         msg.column = action.payload.targetColumn;
         const columnState = state.messages.reduce((acc, m) => {
           acc[String(m.id)] = m.column;
           return acc;
         }, {} as Record<string, ColumnType>);
-        localStorage.setItem('messageColumns', JSON.stringify(columnState));
+        localStorage.setItem("messageColumns", JSON.stringify(columnState));
       }
     },
     setSortOrder: (state, action: PayloadAction<SortOrder>) => {
@@ -150,7 +153,6 @@ export const messagesSlice = createSlice({
         const { messages, isInitial, isOld } = action.payload;
 
         if (isInitial) {
-          // Только при первой загрузке — устанавливаем все сообщения
           const savedFavorites = loadFavoritesFromLocalStorage();
           const savedColumns = loadColumnStateFromLocalStorage();
 
@@ -159,13 +161,27 @@ export const messagesSlice = createSlice({
             isFavorite: !!savedFavorites[String(msg.id)],
             column: savedColumns[String(msg.id)] || "center",
           }));
+
+          if (messages.length > 0) {
+            state.highestMessageId = Math.max(
+              ...messages.map((m) => Number(m.id))
+            );
+          }
         } else if (isOld) {
-          // Старые сообщения — добавляем в начало, но только новые ID
           const existingIds = new Set(state.messages.map((m) => String(m.id)));
           const trulyOldMessages = messages.filter(
             (msg) => !existingIds.has(String(msg.id))
           );
           state.messages = [...trulyOldMessages, ...state.messages];
+
+          if (trulyOldMessages.length > 0) {
+            const oldMaxId = Math.max(
+              ...trulyOldMessages.map((m) => Number(m.id))
+            );
+            if (oldMaxId > state.highestMessageId) {
+              state.highestMessageId = oldMaxId;
+            }
+          }
         } else {
           const existingIds = new Set(state.messages.map((m) => String(m.id)));
           const trulyNewMessages = messages.filter(
@@ -174,6 +190,13 @@ export const messagesSlice = createSlice({
 
           if (trulyNewMessages.length > 0) {
             state.messages = [...state.messages, ...trulyNewMessages];
+
+            const newMaxId = Math.max(
+              ...trulyNewMessages.map((m) => Number(m.id))
+            );
+            if (newMaxId > state.highestMessageId) {
+              state.highestMessageId = newMaxId;
+            }
           }
         }
       })
@@ -192,15 +215,19 @@ export const {
   deleteMessage,
 } = messagesSlice.actions;
 
-export const startPolling = () => (dispatch: any) => {
-  const poll = async () => {
-    await dispatch(fetchMessages({}));
-  };
+// export const startPolling =
+//   () => (dispatch: any, getState: () => { messages: MessagesState }) => {
+//     const poll = async () => {
+//       const state = getState();
+//       await dispatch(
+//         fetchMessages({ messageId: state.messages.highestMessageId })
+//       );
+//     };
 
-  poll();
-  const interval = setInterval(poll, 5000);
-  return () => clearInterval(interval);
-};
+//     poll();
+//     const interval = setInterval(poll, 5000);
+//     return () => clearInterval(interval);
+//   };
 
 export const fetchInitialMessages = () => (dispatch: any) => {
   return dispatch(fetchMessages({ messageId: 0 }));

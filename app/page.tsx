@@ -8,16 +8,18 @@ import Column from '../components/column';
 
 export default function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { messages, loading, error, highestMessageId } = useSelector((state: RootState) => state.messages);
+  const { highestMessageId } = useSelector((state: RootState) => state.messages); 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const highestMessageIdRef = useRef(highestMessageId);
+
+  useEffect(() => {
+    highestMessageIdRef.current = highestMessageId;
+  }, [highestMessageId]);
 
   // Функция для загрузки новых сообщений
-  const loadNewMessages = async () => {
-    try {
-      await dispatch(fetchMessages({ messageId: highestMessageId || 0 }));
-    } catch (err) {
-      console.error('Failed to load new messages:', err);
-    }
+  const loadNewMessages = () => {
+    // Используем ref вместо замыкания
+    dispatch(fetchMessages({ messageId: highestMessageIdRef.current }));
   };
 
   useEffect(() => {
